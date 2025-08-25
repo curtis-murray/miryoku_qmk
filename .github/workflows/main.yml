@@ -121,16 +121,28 @@ jobs:
         run: |
           if [ "${{ matrix.keyboard }}" = "crkbd/custom" ]; then
             mkdir -p keyboards/crkbd/keymaps/custom
-            cp $GITHUB_WORKSPACE/custom_keymap.c keyboards/crkbd/keymaps/custom/keymap.c
-            cp $GITHUB_WORKSPACE/custom_rules.mk keyboards/crkbd/keymaps/custom/rules.mk
-            cp $GITHUB_WORKSPACE/custom_config.h keyboards/crkbd/keymaps/custom/config.h
+            if [ -f "$GITHUB_WORKSPACE/custom_keymap.c" ]; then
+              cp $GITHUB_WORKSPACE/custom_keymap.c keyboards/crkbd/keymaps/custom/keymap.c
+              cp $GITHUB_WORKSPACE/custom_rules.mk keyboards/crkbd/keymaps/custom/rules.mk  
+              cp $GITHUB_WORKSPACE/custom_config.h keyboards/crkbd/keymaps/custom/config.h
+            else
+              echo "Custom files not found in root, checking current directory"
+              ls -la
+              cp custom_keymap.c keyboards/crkbd/keymaps/custom/keymap.c || true
+              cp custom_rules.mk keyboards/crkbd/keymaps/custom/rules.mk || true
+              cp custom_config.h keyboards/crkbd/keymaps/custom/config.h || true
+            fi
             qmk compile -kb crkbd -km custom -e CONVERT_TO=rp2040_ce
           else
             qmk compile -kb ${{ matrix.keyboard }} -km manna-harbour_miryoku -e CONVERT_TO=rp2040_ce
           fi
       - name: Copy firmware
         run: |
-          cp *manna-harbour_miryoku* "${{ steps.inputs.outputs.artifact_dir }}"
+          if [ "${{ matrix.keyboard }}" = "crkbd/custom" ]; then
+            cp crkbd*custom*.uf2 "${{ steps.inputs.outputs.artifact_dir }}" || cp crkbd*custom*.hex "${{ steps.inputs.outputs.artifact_dir }}" || true
+          else
+            cp *manna-harbour_miryoku* "${{ steps.inputs.outputs.artifact_dir }}"
+          fi
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
         with:
