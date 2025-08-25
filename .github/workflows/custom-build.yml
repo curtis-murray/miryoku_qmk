@@ -1,4 +1,4 @@
-name: 'Custom Keymap Build'
+name: Custom Keymap Build
 on:
   workflow_dispatch:
 
