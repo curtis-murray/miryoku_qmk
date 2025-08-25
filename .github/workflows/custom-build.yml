@@ -20,7 +20,7 @@ jobs:
           
           # Write the actual keymap content
           cat > keyboards/crkbd/keymaps/curtiscustom/keymap.c << 'KEYMAP_EOF'
-// Custom Corne V4.1 keymap with Colemak base
+---          
 #include QMK_KEYBOARD_H
 
 enum layers {
