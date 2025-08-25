@@ -1,6 +1,9 @@
 name: Custom Keymap Build
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/custom-build.yml'
 
 jobs:
   build:
