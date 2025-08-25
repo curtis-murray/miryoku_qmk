@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     container: qmkfm/qmk_cli
     steps:
-      - name: Checkout QMK
+      - name: Checkout QMK 
         run: |
           git clone --depth 1 https://github.com/qmk/qmk_firmware.git .
           
