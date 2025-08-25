@@ -120,19 +120,26 @@ jobs:
       - name: Build
         run: |
           if [ "${{ matrix.keyboard }}" = "crkbd/custom" ]; then
-            mkdir -p keyboards/crkbd/keymaps/custom
-            if [ -f "$GITHUB_WORKSPACE/custom_keymap.c" ]; then
-              cp $GITHUB_WORKSPACE/custom_keymap.c keyboards/crkbd/keymaps/custom/keymap.c
-              cp $GITHUB_WORKSPACE/custom_rules.mk keyboards/crkbd/keymaps/custom/rules.mk  
-              cp $GITHUB_WORKSPACE/custom_config.h keyboards/crkbd/keymaps/custom/config.h
-            else
-              echo "Custom files not found in root, checking current directory"
-              ls -la
-              cp custom_keymap.c keyboards/crkbd/keymaps/custom/keymap.c || true
-              cp custom_rules.mk keyboards/crkbd/keymaps/custom/rules.mk || true
-              cp custom_config.h keyboards/crkbd/keymaps/custom/config.h || true
-            fi
-            qmk compile -kb crkbd -km custom -e CONVERT_TO=rp2040_ce
+            # Create our custom keymap directory
+            mkdir -p keyboards/crkbd/keymaps/mycustom
+            
+            # Write the keymap directly to avoid file copy issues
+            cat > keyboards/crkbd/keymaps/mycustom/keymap.c << 'EOF'
+$CUSTOM_KEYMAP_CONTENT
+EOF
+            
+            # Write config.h
+            cat > keyboards/crkbd/keymaps/mycustom/config.h << 'EOF'
+$CUSTOM_CONFIG_CONTENT  
+EOF
+
+            # Write rules.mk
+            cat > keyboards/crkbd/keymaps/mycustom/rules.mk << 'EOF'
+$CUSTOM_RULES_CONTENT
+EOF
+            
+            # Compile with our custom keymap
+            qmk compile -kb crkbd -km mycustom -e CONVERT_TO=rp2040_ce
           else
             qmk compile -kb ${{ matrix.keyboard }} -km manna-harbour_miryoku -e CONVERT_TO=rp2040_ce
           fi

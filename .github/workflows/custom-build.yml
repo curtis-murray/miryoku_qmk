@@ -1,0 +1,197 @@
+name: 'Custom Keymap Build'
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: qmkfm/qmk_cli
+    steps:
+      - name: Checkout QMK
+        run: |
+          git clone --depth 1 https://github.com/qmk/qmk_firmware.git .
+          
+      - name: Create custom keymap
+        run: |
+          mkdir -p keyboards/crkbd/keymaps/curtiscustom
+          
+          # Write the actual keymap content
+          cat > keyboards/crkbd/keymaps/curtiscustom/keymap.c << 'KEYMAP_EOF'
+// Custom Corne V4.1 keymap with Colemak base
+#include QMK_KEYBOARD_H
+
+enum layers {
+    _COLEMAK = 0,
+    _A_LAYER,
+    _NAV,
+    _SYMBOL,
+    _FN,
+};
+
+enum custom_keycodes {
+    REPEAT = SAFE_RANGE,
+};
+
+// Home row mods
+#define HOME_R LALT_T(KC_R)
+#define HOME_S LCTL_T(KC_S)  
+#define HOME_T LSFT_T(KC_T)
+#define HOME_N RSFT_T(KC_N)
+#define HOME_E RCTL_T(KC_E)
+#define HOME_I RALT_T(KC_I)
+
+// Dual function keys
+#define CMD_V LGUI_T(KC_V)
+#define CMD_M RGUI_T(KC_M)
+#define A_LAYER LT(_A_LAYER, KC_A)
+
+// Thumb cluster
+#define ESC_CMD LGUI_T(KC_ESC)
+#define TAB_SFT LSFT_T(KC_TAB)
+#define RPT_SYM LT(_SYMBOL, REPEAT)
+#define ENT_CMD RGUI_T(KC_ENT)
+#define SPC_FN LT(_FN, KC_SPC)
+#define MIN_NAV LT(_NAV, KC_MINS)
+
+const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+    [_COLEMAK] = LAYOUT_split_3x6_3(
+        KC_NO,   KC_Q,    KC_W,    KC_F,    KC_P,    KC_G,        KC_J,    KC_L,    KC_U,    KC_Y,    KC_SCLN, KC_NO,
+        KC_NO,   A_LAYER, HOME_R,  HOME_S,  HOME_T,  KC_D,        KC_H,    HOME_N,  HOME_E,  HOME_I,  KC_O,    KC_NO,
+        KC_NO,   KC_Z,    KC_X,    KC_C,    CMD_V,   KC_B,        KC_K,    CMD_M,   KC_COMM, KC_DOT,  KC_SLSH, KC_NO,
+                          ESC_CMD, TAB_SFT, RPT_SYM,              ENT_CMD, SPC_FN,  MIN_NAV
+    ),
+    
+    [_A_LAYER] = LAYOUT_split_3x6_3(
+        KC_NO,   _______, _______, _______, _______, _______,     _______, _______, _______, _______, _______, KC_NO,
+        KC_NO,   _______, _______, _______, _______, _______,     _______, KC_BSPC, _______, _______, _______, KC_NO,
+        KC_NO,   _______, _______, _______, _______, _______,     _______, _______, _______, _______, _______, KC_NO,
+                          _______, _______, _______,              _______, _______, _______
+    ),
+    
+    [_NAV] = LAYOUT_split_3x6_3(
+        KC_NO,   KC_0,    KC_1,    KC_2,    KC_3,    _______,     _______, KC_HOME, KC_UP,   KC_END,  KC_PGUP, KC_NO,
+        KC_NO,   KC_4,    KC_5,    KC_6,    KC_7,    _______,     KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_PGDN, KC_NO,
+        KC_NO,   KC_8,    KC_9,    _______, _______, _______,     _______, _______, _______, _______, _______, KC_NO,
+                          _______, _______, _______,              _______, _______, _______
+    ),
+    
+    [_SYMBOL] = LAYOUT_split_3x6_3(
+        KC_NO,   _______, _______, _______, _______, _______,     KC_MINS, KC_LPRN, KC_LCBR, KC_RCBR, KC_EQL,  KC_NO,
+        KC_NO,   _______, _______, _______, _______, _______,     KC_QUOT, _______, _______, KC_BSLS, _______, KC_NO,
+        KC_NO,   _______, _______, _______, _______, _______,     KC_RPRN, KC_GRV,  KC_LBRC, KC_RBRC, _______, KC_NO,
+                          _______, _______, _______,              _______, _______, _______
+    ),
+    
+    [_FN] = LAYOUT_split_3x6_3(
+        KC_NO,   KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,       KC_MPRV, KC_MNXT, KC_VOLU, KC_VOLD, KC_MUTE, KC_NO,
+        KC_NO,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,      _______, _______, _______, _______, _______, KC_NO,
+        KC_NO,   KC_F11,  KC_F12,  _______, _______, _______,     _______, _______, _______, _______, _______, KC_NO,
+                          _______, _______, _______,              _______, _______, _______
+    )
+};
+
+uint16_t last_keycode = KC_NO;
+uint8_t last_mods = 0;
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case REPEAT:
+            if (record->event.pressed) {
+                if (last_keycode != KC_NO) {
+                    register_mods(last_mods);
+                    register_code(last_keycode);
+                }
+            } else {
+                if (last_keycode != KC_NO) {
+                    unregister_code(last_keycode);
+                    unregister_mods(last_mods);
+                }
+            }
+            return false;
+        default:
+            if (record->event.pressed && keycode < 256) {
+                last_keycode = keycode;
+                last_mods = get_mods();
+            }
+            return true;
+    }
+}
+
+uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case HOME_R:
+        case HOME_S:
+        case HOME_T:
+        case HOME_N:
+        case HOME_E:
+        case HOME_I:
+        case CMD_V:
+        case CMD_M:
+            return 200;
+        default:
+            return TAPPING_TERM;
+    }
+}
+
+bool get_permissive_hold(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case HOME_R:
+        case HOME_S:
+        case HOME_T:
+        case HOME_N:
+        case HOME_E:
+        case HOME_I:
+        case CMD_V:
+        case CMD_M:
+        case A_LAYER:
+            return true;
+        default:
+            return false;
+    }
+}
+KEYMAP_EOF
+
+          cat > keyboards/crkbd/keymaps/curtiscustom/config.h << 'CONFIG_EOF'
+#pragma once
+
+#define TAPPING_TERM 200
+#define TAPPING_TERM_PER_KEY
+#define PERMISSIVE_HOLD
+#define PERMISSIVE_HOLD_PER_KEY
+#define HOLD_ON_OTHER_KEY_PRESS
+#define QUICK_TAP_TERM 0
+#define IGNORE_MOD_TAP_INTERRUPT
+#define USB_POLLING_INTERVAL_MS 1
+#define FORCE_NKRO
+#define LAYER_STATE_8BIT
+#define NO_ACTION_ONESHOT
+#define NO_MUSIC_MODE
+CONFIG_EOF
+
+          cat > keyboards/crkbd/keymaps/curtiscustom/rules.mk << 'RULES_EOF'
+BOOTMAGIC_ENABLE = yes
+MOUSEKEY_ENABLE = no
+EXTRAKEY_ENABLE = yes
+CONSOLE_ENABLE = no
+COMMAND_ENABLE = no
+NKRO_ENABLE = yes
+RGBLIGHT_ENABLE = no
+RGB_MATRIX_ENABLE = no
+AUDIO_ENABLE = no
+TAP_DANCE_ENABLE = no
+COMBO_ENABLE = no
+LTO_ENABLE = yes
+SPACE_CADET_ENABLE = no
+GRAVE_ESC_ENABLE = no
+MAGIC_ENABLE = no
+RULES_EOF
+
+      - name: Build firmware
+        run: |
+          qmk compile -kb crkbd -km curtiscustom -e CONVERT_TO=rp2040_ce
+          
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: custom-corne-firmware
+          path: crkbd_rev1_curtiscustom_rp2040_ce.uf2

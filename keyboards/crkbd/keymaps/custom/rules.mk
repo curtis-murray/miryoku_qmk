@@ -1,0 +1,20 @@
+# Build options for custom keymap
+BOOTMAGIC_ENABLE = yes
+MOUSEKEY_ENABLE = no
+EXTRAKEY_ENABLE = yes
+CONSOLE_ENABLE = no
+COMMAND_ENABLE = no
+NKRO_ENABLE = yes
+RGBLIGHT_ENABLE = no
+RGB_MATRIX_ENABLE = no
+AUDIO_ENABLE = no
+
+# Home row mods configuration
+TAP_DANCE_ENABLE = no
+COMBO_ENABLE = no
+
+# Size optimizations
+LTO_ENABLE = yes
+SPACE_CADET_ENABLE = no
+GRAVE_ESC_ENABLE = no
+MAGIC_ENABLE = no
