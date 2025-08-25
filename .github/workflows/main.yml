@@ -118,7 +118,16 @@ jobs:
           echo "artifact_build_name=$artifact_build_name" >> $GITHUB_OUTPUT
           echo "artifact_dir=$artifact_dir" >> $GITHUB_OUTPUT
       - name: Build
-        run: qmk compile -kb ${{ matrix.keyboard }} -km manna-harbour_miryoku -e CONVERT_TO=rp2040_ce
+        run: |
+          if [ "${{ matrix.keyboard }}" = "crkbd/custom" ]; then
+            mkdir -p keyboards/crkbd/keymaps/custom
+            cp $GITHUB_WORKSPACE/custom_keymap.c keyboards/crkbd/keymaps/custom/keymap.c
+            cp $GITHUB_WORKSPACE/custom_rules.mk keyboards/crkbd/keymaps/custom/rules.mk
+            cp $GITHUB_WORKSPACE/custom_config.h keyboards/crkbd/keymaps/custom/config.h
+            qmk compile -kb crkbd -km custom -e CONVERT_TO=rp2040_ce
+          else
+            qmk compile -kb ${{ matrix.keyboard }} -km manna-harbour_miryoku -e CONVERT_TO=rp2040_ce
+          fi
       - name: Copy firmware
         run: |
           cp *manna-harbour_miryoku* "${{ steps.inputs.outputs.artifact_dir }}"
